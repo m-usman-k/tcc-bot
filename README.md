@@ -6,7 +6,7 @@ A Discord bot that provides real-time cryptocurrency market data using the CoinD
 
 - **Real-time Market Data**: Fetches live cryptocurrency prices and market metrics
 - **Auto-updating Dashboard**: Automatically updates dashboard messages at configurable intervals
-- **Multiple Data Points**: BTC/USD, ETH/USD, BTC dominance, USDT dominance, ETH/BTC ratio, and total market cap
+- **Multiple Data Points**: BTC/USD, ETH/USD, SOL/USD, BTC dominance, USDT dominance, ETH/BTC ratio, total market cap, open interest, and funding rates
 - **Admin Commands**: Full control over dashboard settings and updates
 - **Error Handling**: Robust error handling for API failures and network issues
 
@@ -107,9 +107,14 @@ The bot uses the following CoinDesk API endpoints:
 - `/overview/v1/latest/marketcap/all/tick` - Total market capitalization
 - `/v1/price/BTC-USD` - Bitcoin price in USD
 - `/v1/price/ETH-USD` - Ethereum price in USD
+- `/v1/price/SOL-USD` - Solana price in USD
 - `/overview/v1/latest/dominance/BTC/tick` - Bitcoin dominance percentage
 - `/overview/v1/latest/dominance/USDT/tick` - USDT dominance percentage
 - `/v1/price/ETH-BTC` - ETH/BTC ratio
+- `/overview/v1/latest/openinterest/BTC/tick` - Bitcoin open interest
+- `/overview/v1/latest/openinterest/ETH/tick` - Ethereum open interest
+- `/overview/v1/latest/fundingrate/BTC/tick` - Bitcoin funding rate
+- `/overview/v1/latest/fundingrate/ETH/tick` - Ethereum funding rate
 
 ## Troubleshooting
 
