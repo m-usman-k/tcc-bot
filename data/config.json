@@ -1,0 +1,18 @@
+{
+    "time": 12,
+    "message-ids": [],
+    "settings": {
+        "default_channel": "general",
+        "update_interval_min": 1,
+        "update_interval_max": 24,
+        "max_dashboards_per_guild": 5,
+        "embed_color": "gold",
+        "show_timestamp": true,
+        "show_thumbnail": true
+    },
+    "api_endpoints": {
+        "coindesk_base": "https://data-api.coindesk.com",
+        "timeout": 30,
+        "retry_attempts": 3
+    }
+}
