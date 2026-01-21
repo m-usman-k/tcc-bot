@@ -1,8 +1,10 @@
 {
     "time": 1,
     "message-ids": [
-        1412200341071597738,
-        1412204924149694494
+        {
+            "message_id": 1463355297971310612,
+            "channel_id": 1435363383560900629
+        }
     ],
     "settings": {
         "default_channel": "general",
@@ -17,5 +19,7 @@
         "coindesk_base": "https://data-api.coindesk.com",
         "timeout": 30,
         "retry_attempts": 3
-    }
+    },
+    "hours": 0,
+    "minutes": 1
 }
