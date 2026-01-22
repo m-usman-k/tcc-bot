@@ -965,31 +965,31 @@ class Dashboard(commands.Cog):
 
     async def get_top_gainers(self, period: str) -> str:
         """
-        Get top 5 gainers for a specific period (24h, 7d, 30d)
+        Get top 5 best performing coins from the top coins by market cap
+        Strategy: First get top coins (by market cap), then find best performers among them
         period: '24h', '7d', '30d'
         """
         try:
             if not CMC_API_KEY:
                 return "CMC Key Missing"
 
-            # Map period to CMC sort parameter
-            sort_map = {
+            # Map period to the percentage change field
+            sort_field_map = {
                 "24h": "percent_change_24h",
                 "7d": "percent_change_7d",
                 "30d": "percent_change_30d"
             }
             
-            target_field = sort_map.get(period)
-            if not target_field:
+            sort_field = sort_field_map.get(period)
+            if not sort_field:
                 return "Invalid Period"
 
-            # CMC API doesn't support sorting by 30d change, so we fetch top market cap and sort manually
-            is_manual_sort = (period == "30d")
-            
+            # Fetch top coins by market cap (established projects)
+            # We'll get top 100 coins and then sort by performance
             params = {
                 "start": "1",
-                "limit": "100" if is_manual_sort else "50",
-                "sort": "market_cap" if is_manual_sort else target_field,
+                "limit": "100",  # Top 100 coins by market cap
+                "sort": "market_cap",
                 "sort_dir": "desc",
                 "CMC_PRO_API_KEY": CMC_API_KEY
             }
@@ -1004,36 +1004,50 @@ class Dashboard(commands.Cog):
                         data = await response.json()
                         coins = data.get("data", [])
                         
-                        if is_manual_sort:
-                            # Sort manually by the target field
-                            def get_sort_key(coin):
-                                try:
-                                    val = coin["quote"]["USD"].get(target_field)
-                                    return val if val is not None else -float('inf')
-                                except:
-                                    return -float('inf')
-                            coins.sort(key=get_sort_key, reverse=True)
+                        if not coins:
+                            return "No Data"
                         
+                        # Filter out stablecoins
+                        stablecoins = {'USDT', 'USDC', 'DAI', 'BUSD', 'TUSD', 'USDD', 'USDP', 'GUSD', 'FRAX', 'FDUSD'}
+                        filtered_coins = [coin for coin in coins if coin.get('symbol') not in stablecoins]
+                        
+                        # Sort by performance (percentage change)
+                        def get_sort_key(coin):
+                            try:
+                                val = coin["quote"]["USD"].get(sort_field)
+                                return val if val is not None else -float('inf')
+                            except:
+                                return -float('inf')
+                        filtered_coins.sort(key=get_sort_key, reverse=True)
+                        
+                        # Get top 5 best performers from top coins
                         top_5 = []
                         count = 0
-                        for coin in coins:
-                            # Filter out stablecoins or weird tokens if necessary
-                            # For now, just take the top ones
-                            quote = coin["quote"]["USD"]
-                            percent_change = quote.get(target_field)
+                        for coin in filtered_coins:
+                            symbol = coin.get("symbol", "???")
+                            quote = coin.get("quote", {}).get("USD", {})
+                            percent_change = quote.get(sort_field)
                             
-                            if percent_change is not None:
-                                top_5.append((f"{count+1}. {coin['symbol']}: +{percent_change:.1f}%"))
+                            # Only include coins with positive gains
+                            if percent_change is not None and percent_change > 0:
                                 count += 1
+                                top_5.append(f"{count}. {symbol}: +{percent_change:.1f}%")
+                                
                                 if count == 5:
                                     break
                         
                         if not top_5:
                             return "No Data"
-                            
+                        
                         return "\n".join(top_5)
                     else:
                         print(f"CMC API Error ({period}): {response.status}")
+                        # Log the response for debugging
+                        try:
+                            error_data = await response.text()
+                            print(f"Response: {error_data}")
+                        except:
+                            pass
                         return "API Error"
         except Exception as e:
             print(f"Error fetching top gainers ({period}): {e}")
