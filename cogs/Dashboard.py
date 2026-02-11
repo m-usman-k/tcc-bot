@@ -169,19 +169,12 @@ class Dashboard(commands.Cog):
     async def get_total_market_cap(self) -> str:
         """Get total market cap value as string without symbols"""
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    f"{COINDESK_BASE_URL}/overview/v1/latest/marketcap/all/tick",
-                    params={"api_key": COINDESK_API_KEY},
-                    headers={"Content-Type": "application/json; charset=UTF-8"}
-                ) as response:
-                    if response.status == 200:
-                        data = await response.json()
-                        total_value = float(data["Data"]["VALUE"])
-                        total_trillions = total_value / 1_000_000_000_000
-                        return f"{total_trillions:.2f}T"
-                    else:
-                        return "Error"
+            total_value = await self.get_total_market_cap_value()
+            if total_value > 0:
+                total_trillions = total_value / 1_000_000_000_000
+                return f"{total_trillions:.2f}T"
+            else:
+                return "Error"
         except Exception as e:
             print(f"Error fetching total market cap: {e}")
             return "Error"
@@ -558,18 +551,10 @@ class Dashboard(commands.Cog):
     async def get_btc_market_cap(self) -> float:
         """Get BTC market cap as float value"""
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_market_cap=true"
-                ) as response:
-                    if response.status == 200:
-                        data = await response.json()
-                        if "bitcoin" in data and "usd_market_cap" in data["bitcoin"]:
-                            return data["bitcoin"]["usd_market_cap"]
-                        else:
-                            return 0
-                    else:
-                        return 0
+            data = await self.get_cmc_data()
+            if "BTC_MCAP" in data:
+                return data["BTC_MCAP"]
+            return 0
         except Exception as e:
             print(f"Error fetching BTC market cap: {e}")
             return 0
@@ -577,18 +562,10 @@ class Dashboard(commands.Cog):
     async def get_usdt_market_cap(self) -> float:
         """Get USDT market cap as float value"""
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    "https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=usd&include_market_cap=true"
-                ) as response:
-                    if response.status == 200:
-                        data = await response.json()
-                        if "tether" in data and "usd_market_cap" in data["tether"]:
-                            return data["tether"]["usd_market_cap"]
-                        else:
-                            return 0
-                    else:
-                        return 0
+            data = await self.get_cmc_data()
+            if "USDT_MCAP" in data:
+                return data["USDT_MCAP"]
+            return 0
         except Exception as e:
             print(f"Error fetching USDT market cap: {e}")
             return 0
@@ -596,16 +573,23 @@ class Dashboard(commands.Cog):
     async def get_total_market_cap_value(self) -> float:
         """Get total market cap as float value for calculations"""
         try:
+            if not CMC_API_KEY:
+                return 0
+
             async with aiohttp.ClientSession() as session:
                 async with session.get(
-                    f"{COINDESK_BASE_URL}/overview/v1/latest/marketcap/all/tick",
-                    params={"api_key": COINDESK_API_KEY},
-                    headers={"Content-Type": "application/json; charset=UTF-8"}
+                    f"{CMC_BASE_URL}/v1/global-metrics/quotes/latest",
+                    headers={
+                        "Accept": "application/json",
+                        "X-CMC_PRO_API_KEY": CMC_API_KEY
+                    }
                 ) as response:
                     if response.status == 200:
                         data = await response.json()
-                        return float(data["Data"]["VALUE"])
+                        quote = data.get("data", {}).get("quote", {}).get("USD", {})
+                        return float(quote.get("total_market_cap", 0))
                     else:
+                        print(f"CMC Global API Error: {response.status}")
                         return 0
         except Exception as e:
             print(f"Error fetching total market cap value: {e}")
